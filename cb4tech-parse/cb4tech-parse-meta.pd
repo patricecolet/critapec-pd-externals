@@ -1,0 +1,10 @@
+#N canvas 10 10 200 200 10;
+#N canvas 20 20 420 300 META 0;
+#X text 10 10 META this is a prototype of a libdir meta file;
+#X text 10 30 NAME cb4tech-parse;
+#X text 10 50 AUTHOR Patrice Colet;
+#X text 10 70 VERSION 0.1;
+#X text 10 90 LICENSE GPL-2.0+;
+#X text 10 110 DESCRIPTION Parses CB4Tech sensor data;
+#X restore 10 10 pd META;
+
