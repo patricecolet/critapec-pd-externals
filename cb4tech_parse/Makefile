@@ -1,16 +1,16 @@
-# Makefile for cb4tech-parse
+# Makefile for cb4tech_parse
 
-lib.name = cb4tech-parse
+lib.name = cb4tech_parse
 
 lib.version := $(shell sed -n 's|^\#X text [0-9][0-9]* [0-9][0-9]* VERSION \(.*\);|\1|p' $(lib.name)-meta.pd)
 
-class.sources = cb4tech-parse.c
+class.sources = cb4tech_parse.c
 
 datafiles = \
         LICENSE.txt \
         README.md \
-        cb4tech-parse-help.pd \
-        cb4tech-parse-meta.pd
+        cb4tech_parse-help.pd \
+        cb4tech_parse-meta.pd
 
 cflags = -DVERSION='"$(lib.version)"'
 

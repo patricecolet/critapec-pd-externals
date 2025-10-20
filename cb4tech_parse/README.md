@@ -1,10 +1,10 @@
-# cb4tech-parse
+# cb4tech_parse
 
 Un external pour Pure Data qui parse les données des capteurs CB4Tech.
 
 ## Description
 
-`cb4tech-parse` reçoit une liste de bytes représentant la structure `sensors_values_t` et sort les valeurs groupées par type de contrôleur sur un seul outlet.
+`cb4tech_parse` reçoit une liste de bytes représentant la structure `sensors_values_t` et sort les valeurs groupées par type de contrôleur sur un seul outlet.
 
 ## Structure de données
 
@@ -55,7 +55,7 @@ Les données sont envoyées sous forme de messages avec un symbole suivi d'une l
 ```
 [liste de 30 bytes(
 |
-[cb4tech-parse]
+[cb4tech_parse]
 |
 [route encoder adc selector joystick drum button]
 |        |        |        |        |        |

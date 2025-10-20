@@ -1,6 +1,6 @@
 #N canvas 100 100 800 600 12;
-#X obj 50 150 cb4tech-parse;
-#X text 50 20 cb4tech-parse - Parse les données des capteurs CB4Tech;
+#X obj 50 150 cb4tech_parse;
+#X text 50 20 cb4tech_parse - Parse les données des capteurs CB4Tech;
 #X text 50 50 Entrée: liste de 30 bytes représentant la structure sensors_values_t;
 #X text 50 80 Sortie (1 outlet): messages groupés par type de contrôleur;
 #X obj 50 180 route encoder adc selector joystick drum button;

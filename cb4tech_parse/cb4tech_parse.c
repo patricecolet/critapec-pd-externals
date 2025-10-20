@@ -1,4 +1,4 @@
-/* cb4tech-parse - Un external pour Pure Data qui parse les données des capteurs CB4Tech
+/* cb4tech_parse - Un external pour Pure Data qui parse les données des capteurs CB4Tech
  *
  * Copyright (C) 2025 Patrice Colet
  *
@@ -62,7 +62,7 @@ static void cb4tech_parse_list(t_cb4tech_parse *x, t_symbol *s, int argc, t_atom
     
     // Vérifier que nous avons exactement la taille attendue
     if (argc != STRUCT_SIZE) {
-        pd_error(x, "cb4tech-parse: expected %d bytes, got %d", (int)STRUCT_SIZE, argc);
+        pd_error(x, "cb4tech_parse: expected %d bytes, got %d", (int)STRUCT_SIZE, argc);
         return;
     }
     
@@ -118,7 +118,7 @@ static void cb4tech_parse_list(t_cb4tech_parse *x, t_symbol *s, int argc, t_atom
 static void cb4tech_parse_bang(t_cb4tech_parse *x)
 {
     (void)x; // unused
-    post("cb4tech-parse: expected data size = %d bytes", (int)STRUCT_SIZE);
+    post("cb4tech_parse: expected data size = %d bytes", (int)STRUCT_SIZE);
 }
 
 static void *cb4tech_parse_new(void)
@@ -135,7 +135,7 @@ static void *cb4tech_parse_new(void)
 
 void cb4tech_parse_setup(void)
 {
-    cb4tech_parse_class = class_new(gensym("cb4tech-parse"),
+    cb4tech_parse_class = class_new(gensym("cb4tech_parse"),
         (t_newmethod)cb4tech_parse_new,
         0,
         sizeof(t_cb4tech_parse),
@@ -145,6 +145,6 @@ void cb4tech_parse_setup(void)
     class_addlist(cb4tech_parse_class, cb4tech_parse_list);
     class_addbang(cb4tech_parse_class, cb4tech_parse_bang);
     
-    post("cb4tech-parse v%s - parses CB4Tech sensor data (%d bytes)", VERSION, (int)STRUCT_SIZE);
+    post("cb4tech_parse v%s - parses CB4Tech sensor data (%d bytes)", VERSION, (int)STRUCT_SIZE);
 }
 
