@@ -1,0 +1,14 @@
+# Fichiers compilés
+*.o
+*.pd_darwin
+*.pd_linux
+*.dll
+*.pd_windows
+
+# Fichiers temporaires
+*~
+.DS_Store
+
+# Build directories
+build/
+

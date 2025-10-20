@@ -1,0 +1,23 @@
+#N canvas 100 100 600 400 12;
+#X obj 50 50 float2byte;
+#X floatatom 50 20 5 0 0 0 - - -, f 5;
+#X obj 50 80 unpack f f f f;
+#X floatatom 50 110 3 0 255 0 byte0 - -, f 3;
+#X floatatom 100 110 3 0 255 0 byte1 - -, f 3;
+#X floatatom 150 110 3 0 255 0 byte2 - -, f 3;
+#X floatatom 200 110 3 0 255 0 byte3 - -, f 3;
+#X text 50 150 float2byte convertit un float32 en 4 bytes au format little-endian;
+#X text 50 180 Inlet: float;
+#X text 50 200 Outlet: liste de 4 bytes (0-255);
+#X text 50 240 Exemple: 3.14159 -> bytes de la représentation IEEE 754;
+#X obj 50 280 print bytes;
+#X msg 50 -10 3.14159;
+#X connect 0 0 2 0;
+#X connect 0 0 11 0;
+#X connect 1 0 0 0;
+#X connect 2 0 3 0;
+#X connect 2 1 4 0;
+#X connect 2 2 5 0;
+#X connect 2 3 6 0;
+#X connect 12 0 1 0;
+
