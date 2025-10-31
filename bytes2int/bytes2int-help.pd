@@ -1,0 +1,26 @@
+#N canvas 100 100 720 520 14;
+#X obj 50 60 bytes2int;
+#X msg 50 30 1 0 0 0;  # little-endian => 1
+#X floatatom 50 100 12 0 0 0 int - -, f 5;
+#X obj 50 130 print int;
+#X obj 220 60 bytes2int big;  # création en big-endian
+#X msg 220 30 0 0 0 1;  # big-endian => 1
+#X floatatom 220 100 12 0 0 0 int - -, f 5;
+#X obj 220 130 print int-big;
+#X text 50 200 Comportement:
+#X text 50 220 - < 4 bytes: complète avec 0 puis convertit
+#X text 50 240 - > 4 bytes: 4 premiers convertis, le reste sur outlet 1
+#X text 50 260 - bytes invalides (<0 ou >255): tout sur outlet 1
+#X obj 50 320 print extra-or-invalid;
+#X msg 50 290 255 255 255 255 99 100;
+#X msg 50 10 endian big;
+#X text 140 10 (changer dynamiquement l'endianness)
+#X connect 0 0 2 0;
+#X connect 0 0 3 0;
+#X connect 0 1 12 0;
+#X connect 1 0 0 0;
+#X connect 4 0 6 0;
+#X connect 4 0 7 0;
+#X connect 5 0 4 0;
+#X connect 13 0 0 0;
+#X connect 14 0 0 0;
