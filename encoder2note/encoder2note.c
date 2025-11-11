@@ -26,7 +26,7 @@ typedef struct _encoder2note
 {
     t_object x_obj;
     t_float x_gear;              // Position du levier de vitesse (demi-tons par tour)
-    t_float x_prev_turns;        // Nombre de tours précédent
+    t_float x_prev_position;     // Position précédente de l'encodeur (0-1)
     t_float x_accumulator;       // Accumulateur de demi-tons
     t_float x_min_note;          // Note minimum (ambitus)
     t_float x_max_note;          // Note maximum (ambitus)
@@ -36,21 +36,31 @@ typedef struct _encoder2note
 
 static void encoder2note_float(t_encoder2note *x, t_floatarg f)
 {
-    // f représente le nombre de tours
+    // f représente la position de l'encodeur (0 à 1 pour un tour)
     
     // Si c'est la première valeur, initialiser sans calculer de delta
     if (x->x_first_value) {
-        x->x_prev_turns = f;
+        x->x_prev_position = f;
         x->x_first_value = 0;
         outlet_float(x->x_out, x->x_accumulator);
         return;
     }
     
-    // Calculer le delta depuis la dernière valeur
-    t_float delta_turns = f - x->x_prev_turns;
+    // Calculer le delta depuis la dernière position
+    t_float delta = f - x->x_prev_position;
+    
+    // Détecter le wrap-around (passage de 1 à 0 ou de 0 à 1)
+    if (delta > 0.5) {
+        // L'encodeur a fait un tour arrière (1 → 0)
+        delta -= 1.0;
+    } else if (delta < -0.5) {
+        // L'encodeur a fait un tour avant (0 → 1)
+        delta += 1.0;
+    }
     
     // Calculer le changement en demi-tons selon la vitesse actuelle
-    t_float semitone_delta = delta_turns * x->x_gear;
+    // delta est en fraction de tour (ex: 0.25 = un quart de tour)
+    t_float semitone_delta = delta * x->x_gear;
     
     // Accumuler le changement
     x->x_accumulator += semitone_delta;
@@ -62,8 +72,8 @@ static void encoder2note_float(t_encoder2note *x, t_floatarg f)
         x->x_accumulator = x->x_max_note;
     }
     
-    // Sauvegarder la valeur actuelle pour le prochain delta
-    x->x_prev_turns = f;
+    // Sauvegarder la position actuelle pour le prochain delta
+    x->x_prev_position = f;
     
     // Sortir la valeur complète
     outlet_float(x->x_out, x->x_accumulator);
@@ -158,7 +168,7 @@ static void *encoder2note_new(t_floatarg f, t_floatarg min_note, t_floatarg max_
     }
     
     // Initialiser les variables
-    x->x_prev_turns = 0.0;
+    x->x_prev_position = 0.0;
     x->x_accumulator = 0.0;
     x->x_first_value = 1;
     
@@ -195,8 +205,9 @@ void encoder2note_setup(void)
     class_addmethod(encoder2note_class, (t_method)encoder2note_gear, 
                     gensym("gear"), A_FLOAT, 0);
     
-    post("encoder2note v%s - convertit tours d'encodeur en demi-tons (avec ambitus)", VERSION);
+    post("encoder2note v%s - convertit position d'encodeur en demi-tons (avec ambitus)", VERSION);
     post("  Usage: [encoder2note vitesse min_note max_note]");
+    post("  Entrée: position encodeur 0-1 (détecte automatiquement les tours)");
     post("  Vitesse: 1 à 48 demi-tons/tour (défaut: 12)");
     post("  Ambitus: min et max en demi-tons (défaut: -48 à +48)");
     post("  Messages: reset, set N, min N, max N, gear N (1-48)");

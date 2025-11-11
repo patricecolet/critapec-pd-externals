@@ -1,15 +1,17 @@
 # encoder2note
 
-Un external pour Pure Data qui convertit le nombre de tours d'un encodeur rotatif en notes musicales avec demi-tons et centièmes de ton, selon la position d'un levier de vitesse.
+Un external pour Pure Data qui convertit la position d'un encodeur rotatif (0-1) en notes musicales avec demi-tons et centièmes de ton, selon la position d'un levier de vitesse.
 
 ## Description
 
-`encoder2note` est conçu pour des applications musicales utilisant un volant avec encodeur rotatif et un levier de vitesse. Il convertit le nombre de tours du volant en notes musicales exprimées en demi-tons avec décimales (partie décimale = centièmes de ton).
+`encoder2note` est conçu pour des applications musicales utilisant un volant avec encodeur rotatif et un levier de vitesse. Il reçoit la position de l'encodeur (normalisée de 0 à 1 pour un tour complet) et **compte automatiquement les tours** pour générer des notes musicales exprimées en demi-tons avec décimales (partie décimale = centièmes de ton).
 
-L'objet utilise un **accumulateur** pour éviter les sauts de notes lors du changement de vitesse et un **ambitus** pour limiter l'étendue des notes entre un minimum et un maximum. Cela permet de changer de vitesse en temps réel sans discontinuité dans la sortie musicale.
+L'objet utilise un **accumulateur** pour éviter les sauts de notes lors du changement de vitesse, **détecte automatiquement les passages de tours** (wrap-around), et utilise un **ambitus** pour limiter l'étendue des notes entre un minimum et un maximum. Cela permet de changer de vitesse en temps réel sans discontinuité dans la sortie musicale.
 
 ## Caractéristiques
 
+- **Comptage automatique des tours** : Reçoit position 0-1, détecte et compte les tours automatiquement
+- **Détection du wrap-around** : Détecte les passages de 1→0 (tour avant) et 0→1 (tour arrière)
 - **Calcul par delta** : Détecte le mouvement du volant et accumule les changements
 - **Vitesse variable** : De 1 à 48 demi-tons par tour complet (valeurs continues, pas de hardcoding)
 - **Pas de sauts** : L'accumulateur garantit une continuité lors du changement de vitesse
@@ -20,7 +22,7 @@ L'objet utilise un **accumulateur** pour éviter les sauts de notes lors du chan
 
 ### Inlets
 
-- **Inlet gauche** : Reçoit le nombre de tours (ex: 1 = un tour, 2.5 = deux tours et demi)
+- **Inlet gauche** : Reçoit la position de l'encodeur (0 à 1 pour un tour, les tours sont comptés automatiquement)
 - **Inlet droit** : Reçoit la vitesse en demi-tons/tour (de 1 à 48)
 
 ### Outlets
@@ -47,14 +49,17 @@ L'objet utilise un **accumulateur** pour éviter les sauts de notes lors du chan
 
 ## Exemple de comportement
 
-### Avec accumulateur
+### Avec comptage automatique des tours
 
-1. Tournez de 1 tour avec vitesse 12 → Accumulateur = 12.0 → Sortie: 12.00
-2. Tournez de 0.5 tour → Accumulateur = 18.0 → Sortie: 18.00
-3. **Changez vitesse à 24** → Accumulateur reste à 18.0 → **Pas de saut!**
-4. Tournez de 0.5 tour → Accumulateur = 30.0 → Sortie: 30.00 (0.5 × 24 = 12)
+1. Encodeur envoie 0 → 0.25 → 0.5 → 0.75 → 1.0 (un tour complet, vitesse 12)
+   - À 0.5 (demi-tour) : Sortie = 6.0
+   - À 1.0 (tour complet) : Sortie = 12.0
+2. Encodeur continue : 1.0 → 0 → 0.25 (détecte le wrap-around, c'est un nouveau tour)
+   - À 0.25 du 2ème tour : Sortie = 15.0
+3. **Changez vitesse à 24** → Accumulateur reste à 15.0 → **Pas de saut!**
+4. Continuez à tourner de 0.25 tour → Sortie = 21.0 (0.25 × 24 = 6, ajouté à 15)
 
-L'avantage : vous pouvez changer de vitesse en temps réel sans créer de discontinuité dans la mélodie.
+L'avantage : vous pouvez faire autant de tours que vous voulez, dans les deux sens, et changer de vitesse en temps réel sans créer de discontinuité dans la mélodie.
 
 ### Avec ambitus
 
@@ -85,12 +90,14 @@ L'ambitus empêche de sortir des limites définies, idéal pour restreindre à u
 ## Patch d'exemple
 
 ```
-[hsl 200 15 0 1]  # Slider pour simuler l'encodeur
+[hsl 200 15 0 1 0 0]  # Slider 0-1 pour simuler l'encodeur
 |
 [encoder2note 12]
-|          |
-[demi-tons][centièmes]
+|
+[demi-tons + centièmes]
 ```
+
+**Note importante** : L'encodeur doit envoyer une valeur normalisée entre 0 et 1 pour un tour complet. L'external détecte automatiquement quand vous passez de 1 à 0 (nouveau tour) ou de 0 à 1 (tour arrière).
 
 ## Compilation
 
