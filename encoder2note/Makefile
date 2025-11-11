@@ -1,16 +1,16 @@
-# Makefile for bytes2float
+# Makefile for encoder2note
 
-lib.name = bytes2float
+lib.name = encoder2note
 
 lib.version := $(shell sed -n 's|^\#X text [0-9][0-9]* [0-9][0-9]* VERSION \(.*\);|\1|p' $(lib.name)-meta.pd)
 
-class.sources = bytes2float.c
+class.sources = encoder2note.c
 
 datafiles = \
-        LICENSE.txt \
-        README.md \
-        bytes2float-help.pd \
-        bytes2float-meta.pd
+	LICENSE.txt \
+	README.md \
+	encoder2note-help.pd \
+	encoder2note-meta.pd
 
 cflags = -DVERSION='"$(lib.version)"'
 
@@ -20,7 +20,4 @@ cflags = -DVERSION='"$(lib.version)"'
 
 PDLIBBUILDER_DIR=pd-lib-builder/
 include $(firstword $(wildcard $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder Makefile.pdlibbuilder))
-
-
-
 
