@@ -235,7 +235,7 @@ static void *rpi_encoder_step_poll(void *userdata)
             int state = rpi_encoder_step_read_phase(x);
             int dir = rpi_encoder_step_decode_direction(last_state, state);
             if (dir != 0)
-                atomic_fetch_add(&x->x_pending_steps, dir);
+                atomic_fetch_add(&x->x_pending_steps, -dir);
             last_state = state;
         }
 
