@@ -33,6 +33,7 @@ typedef struct _rpi_encoder_step {
     t_float x_value;
     t_float x_interval;
     t_float x_switch_value;
+    int     x_partial_steps;
 
 #ifdef RPI_ENCODER_HAVE_GPIOD
     struct gpiod_chip *x_chip;
@@ -198,6 +199,7 @@ static int rpi_encoder_step_open_lines(t_rpi_encoder_step *x, int chip_index,
     if (sw >= 0)
         atomic_store(&x->x_switch_state, sw ? 1 : 0);
     atomic_store(&x->x_pending_steps, 0);
+    x->x_partial_steps = 0;
 
     return 0;
 }
@@ -309,12 +311,14 @@ static void rpi_encoder_step_set_max(t_rpi_encoder_step *x, t_floatarg f)
 static void rpi_encoder_step_set_value(t_rpi_encoder_step *x, t_floatarg f)
 {
     x->x_value = rpi_encoder_step_clamp(f, x->x_min, x->x_max);
+    x->x_partial_steps = 0;
     outlet_float(x->x_value_out, x->x_value);
 }
 
 static void rpi_encoder_step_reset(t_rpi_encoder_step *x)
 {
     x->x_value = rpi_encoder_step_clamp(0, x->x_min, x->x_max);
+    x->x_partial_steps = 0;
     outlet_float(x->x_value_out, x->x_value);
 }
 
@@ -323,9 +327,14 @@ static void rpi_encoder_step_tick(t_rpi_encoder_step *x)
 #ifdef RPI_ENCODER_HAVE_GPIOD
     int delta = atomic_exchange(&x->x_pending_steps, 0);
     if (delta != 0) {
-        x->x_value = rpi_encoder_step_clamp(
-            x->x_value + (delta * x->x_step), x->x_min, x->x_max);
-        outlet_float(x->x_value_out, x->x_value);
+        x->x_partial_steps += delta;
+        int clicks = x->x_partial_steps / 4;
+        if (clicks != 0) {
+            x->x_partial_steps -= clicks * 4;
+            x->x_value = rpi_encoder_step_clamp(
+                x->x_value + ((t_float)clicks * x->x_step), x->x_min, x->x_max);
+            outlet_float(x->x_value_out, x->x_value);
+        }
     }
     x->x_switch_value = (t_float)atomic_load(&x->x_switch_state);
     outlet_float(x->x_switch_out, x->x_switch_value);
@@ -402,6 +411,7 @@ static void *rpi_encoder_step_new(t_symbol *s, int argc, t_atom *argv)
     x->x_step = fabs(fstep);
     x->x_value = rpi_encoder_step_clamp(0, x->x_min, x->x_max);
     x->x_switch_value = 1.0;
+    x->x_partial_steps = 0;
 
     if (finterval <= 0)
         finterval = RPI_ENCODER_DEFAULT_INTERVAL;
@@ -414,6 +424,7 @@ static void *rpi_encoder_step_new(t_symbol *s, int argc, t_atom *argv)
 #ifdef RPI_ENCODER_HAVE_GPIOD
     atomic_store(&x->x_pending_steps, 0);
     atomic_store(&x->x_switch_state, 1);
+    x->x_partial_steps = 0;
     if (rpi_encoder_step_open_lines(x,
             (chip_index < 0) ? 0 : (int)chip_index,
             (line_a <= 0) ? 17 : (int)line_a,

@@ -5,9 +5,10 @@ External Pure Data pour lire un encodeur rotatif (quadrature) et son commutateur
 ## Fonctionnalités
 
 - Lecture quadrature A/B avec détection du sens (+/-).
-- Pas (`step`), minimum et maximum configurables pour calculer la valeur accumulée.
+- Pas (`step`) appliqué **par cran mécanique** (les 4 fronts sont agrégés), minimum et maximum configurables.
 - Lecture du switch avec rappel périodique de l’état (0 = appuyé si pull-up).
 - Thread dédié bloqué sur les interruptions GPIO (libgpiod) et `clock` PD pour l’émission.
+- Quantification anti-rebond : aucune valeur intermédiaire pendant le passage d’un cran à l’autre.
 - Mode *stub* automatique sur les plateformes sans `libgpiod` (compilation OK mais aucune lecture matérielle).
 
 ## Création
@@ -20,7 +21,7 @@ External Pure Data pour lire un encodeur rotatif (quadrature) et son commutateur
 - `lineA/B` : numéros BCM des lignes de l’encodeur (17/27 par défaut).
 - `lineSwitch` : numéro BCM pour le bouton (22 par défaut).
 - `min`, `max` : bornes de la valeur (défaut 0–127).
-- `step` : pas appliqué à chaque cran (défaut 1).
+- `step` : variation appliquée pour **un cran complet** (défaut 1).
 - `interval_ms` : période de rafraîchissement PD (défaut 2 ms).
 
 ### Messages
