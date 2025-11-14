@@ -46,7 +46,7 @@ make
 ## Sorties
 
 - **Outlet 0** : valeur accumulée, bornée entre `min` et `max`.
-- **Outlet 1** : état du switch (1 = repos avec pull-up, 0 = appuyé).
+- **Outlet 1** : état du switch (1 = appuyé, 0 = relâché), quelle que soit la polarité.
 
 ## Auteurs et licence
 

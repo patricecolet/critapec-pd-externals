@@ -197,7 +197,7 @@ static int rpi_encoder_step_open_lines(t_rpi_encoder_step *x, int chip_index,
 
     int sw = gpiod_line_get_value(x->x_line_sw);
     if (sw >= 0)
-        atomic_store(&x->x_switch_state, sw ? 1 : 0);
+        atomic_store(&x->x_switch_state, sw ? 0 : 1);
     atomic_store(&x->x_pending_steps, 0);
     x->x_partial_steps = 0;
 
@@ -241,7 +241,7 @@ static void *rpi_encoder_step_poll(void *userdata)
 
         int sw = gpiod_line_get_value(x->x_line_sw);
         if (sw >= 0)
-            atomic_store(&x->x_switch_state, sw ? 1 : 0);
+            atomic_store(&x->x_switch_state, sw ? 0 : 1);
     }
 
     return NULL;
@@ -410,7 +410,7 @@ static void *rpi_encoder_step_new(t_symbol *s, int argc, t_atom *argv)
         fstep = 1.0;
     x->x_step = fabs(fstep);
     x->x_value = rpi_encoder_step_clamp(0, x->x_min, x->x_max);
-    x->x_switch_value = 1.0;
+    x->x_switch_value = 0.0;
     x->x_partial_steps = 0;
 
     if (finterval <= 0)
@@ -423,7 +423,7 @@ static void *rpi_encoder_step_new(t_symbol *s, int argc, t_atom *argv)
 
 #ifdef RPI_ENCODER_HAVE_GPIOD
     atomic_store(&x->x_pending_steps, 0);
-    atomic_store(&x->x_switch_state, 1);
+    atomic_store(&x->x_switch_state, 0);
     x->x_partial_steps = 0;
     if (rpi_encoder_step_open_lines(x,
             (chip_index < 0) ? 0 : (int)chip_index,
