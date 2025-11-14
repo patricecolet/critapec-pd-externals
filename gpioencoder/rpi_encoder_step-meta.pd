@@ -1,0 +1,11 @@
+#N canvas 10 10 200 200 10;
+#N canvas 20 20 420 220 META 0;
+#X text 10 10 META fichier de métadonnées;
+#X text 10 30 NAME rpi_encoder_step;
+#X text 10 50 AUTHOR Patrice Colet;
+#X text 10 70 VERSION 0.1;
+#X text 10 90 LICENSE GPL-2.0+;
+#X text 10 110 DESCRIPTION Encodeur GPIO + switch pour Raspberry Pi;
+#X restore 10 10 pd META;
+
+
