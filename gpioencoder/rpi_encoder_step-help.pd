@@ -1,9 +1,9 @@
 #N canvas 100 100 720 420 12;
 #X text 30 20 rpi_encoder_step - encodeur quadrature + switch via GPIO Raspberry Pi;
-#X text 30 50 Création: [rpi_encoder_step chip lineA lineB lineSwitch min max step interval];
-#X obj 50 160 rpi_encoder_step 0 17 27 22 0 127 1 5;
-#X floatatom 50 210 6 0 0 1 valeur - - 0;
-#X floatatom 180 210 3 0 1 1 switch - - 0;
+#X text 13 52 Création: [rpi_encoder_step chip lineA lineB lineSwitch min max step interval];
+#X obj 50 217 rpi_encoder_step 0 17 27 22 0 127 1 5;
+#X floatatom 50 267 6 0 0 1 valeur - - 0;
+#X floatatom 180 267 3 0 1 1 switch - - 0;
 #X text 30 90 Inlets: aucun (l’objet lit le matériel);
 #X text 30 110 Outlets:;
 #X text 50 130 1) valeur bornée / 2) état du switch (1=relevé \, 0=appuyé);
@@ -12,8 +12,8 @@
 #X msg 390 160 step 5;
 #X msg 450 160 reset;
 #X msg 500 160 interval 1;
-#X text 30 250 Messages:;
-#X text 50 270 min/max/step/set/reset/interval;
+#X text 30 307 Messages:;
+#X text 50 327 min/max/step/set/reset/interval;
 #X obj 50 120 bng 15 250 50 0 empty empty bang -29 7 0 10 #dcdcdc #000000 #000000;
 #X text 80 118 Bang: renvoie la dernière valeur + switch;
 #X connect 2 0 3 0;
@@ -24,4 +24,3 @@
 #X connect 11 0 2 0;
 #X connect 12 0 2 0;
 #X connect 15 0 2 0;
-

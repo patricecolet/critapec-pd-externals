@@ -1,0 +1,361 @@
+{
+    "name": "EliseEtJose",
+    "globalSettings": {
+        "volume": 80,
+        "mute": 0,
+        "soundPath": "sons"
+    },
+    "interface": [
+        {
+            "name": "Gametraks",
+            "top": 10,
+            "left": 10,
+            "widget": "faderMatrix",
+            "objects": "modules",
+            "group": "Gametraks"
+        },
+        {
+            "name": "Master",
+            "left": 900,
+            "top": 10,
+            "width": 80,
+            "height": 550,
+            "widget": "master",
+            "objects": "globalSettings"
+        },
+        {
+            "name": "Presets",
+            "left": 780,
+            "top": 10,
+            "width": 100,
+            "widget": "switch",
+            "objects": "presets"
+        }
+    ],
+    "groups": {
+        "Gametraks": {
+            "volume": 100
+        }
+    }
+    ,
+    "modules": [
+        {
+            "computerID": 80,
+            "moduleID": "module_1",
+            "Group": "Gametraks",
+            "Instrument": "gametrak",
+            "moduleVolume": 100,
+            "cueList": [
+                {
+                    "id": 0,
+                    "name": "OFF"
+                },
+                {
+                    "id": 1,
+                    "name": "MDJ1"
+                },
+                {
+                    "id": 2,
+                    "name": "MDJ2"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ3"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ4"
+                }
+            ]
+        },
+        {
+            "computerID": 79,
+            "moduleID": "module_2",
+            "Group": "Gametraks",
+            "Instrument": "gametrak",
+            "moduleVolume": 100,
+            "cueList": [
+                {
+                    "id": 0,
+                    "name": "OFF"
+                },
+                {
+                    "id": 1,
+                    "name": "MDJ1"
+                },
+                {
+                    "id": 2,
+                    "name": "MDJ2"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ3"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ4"
+                }
+            ]
+        },
+        {
+            "computerID": 78,
+            "moduleID": "module_3",
+            "Group": "Gametraks",
+            "Instrument": "gametrak",
+            "moduleVolume": 100,
+            "cueList": [
+                {
+                    "id": 0,
+                    "name": "OFF"
+                },
+                {
+                    "id": 1,
+                    "name": "MDJ1"
+                },
+                {
+                    "id": 2,
+                    "name": "MDJ2"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ3"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ4"
+                }
+            ]
+        },
+        {
+            "computerID": 77,
+            "moduleID": "module_4",
+            "Group": "Gametraks",
+            "Instrument": "gametrak",
+            "moduleVolume": 100,
+            "cueList": [
+                {
+                    "id": 0,
+                    "name": "OFF"
+                },
+                {
+                    "id": 1,
+                    "name": "MDJ1"
+                },
+                {
+                    "id": 2,
+                    "name": "MDJ2"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ3"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ4"
+                }
+            ]
+        },
+        {
+            "computerID": 76,
+            "moduleID": "module_5",
+            "Group": "Gametraks",
+            "Instrument": "gametrak",
+            "moduleVolume": 100,
+            "cueList": [
+                {
+                    "id": 0,
+                    "name": "OFF"
+                },
+                {
+                    "id": 1,
+                    "name": "MDJ1"
+                },
+                {
+                    "id": 2,
+                    "name": "MDJ2"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ3"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ4"
+                }
+            ]
+        },
+        {
+            "computerID": 75,
+            "moduleID": "module_6",
+            "Group": "Gametraks",
+            "Instrument": "gametrak",
+            "moduleVolume": 100,
+            "cueList": [
+                {
+                    "id": 0,
+                    "name": "OFF"
+                },
+                {
+                    "id": 1,
+                    "name": "MDJ1"
+                },
+                {
+                    "id": 2,
+                    "name": "MDJ2"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ3"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ4"
+                }
+            ]
+        },
+        {
+            "computerID": 74,
+            "moduleID": "module_7",
+            "Group": "Gametraks",
+            "Instrument": "gametrak",
+            "moduleVolume": 97,
+            "cueList": [
+                {
+                    "id": 0,
+                    "name": "OFF"
+                },
+                {
+                    "id": 1,
+                    "name": "MDJ1"
+                },
+                {
+                    "id": 2,
+                    "name": "MDJ2"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ3"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ4"
+                }
+            ]
+        },
+        {
+            "computerID": 73,
+            "moduleID": "module_8",
+            "Group": "Gametraks",
+            "Instrument": "gametrak",
+            "moduleVolume": 97,
+            "cueList": [
+                {
+                    "id": 0,
+                    "name": "OFF"
+                },
+                {
+                    "id": 1,
+                    "name": "MDJ1"
+                },
+                {
+                    "id": 2,
+                    "name": "MDJ2"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ3"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ4"
+                }
+            ]
+        },
+        {
+            "computerID": 72,
+            "moduleID": "module_9",
+            "Group": "Gametraks",
+            "Instrument": "gametrak",
+            "moduleVolume": 97,
+            "cueList": [
+                {
+                    "id": 0,
+                    "name": "OFF"
+                },
+                {
+                    "id": 1,
+                    "name": "MDJ1"
+                },
+                {
+                    "id": 2,
+                    "name": "MDJ2"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ3"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ4"
+                }
+            ]
+        },
+        {
+            "computerID": 71,
+            "moduleID": "module_10",
+            "Group": "Gametraks",
+            "Instrument": "gametrak",
+            "moduleVolume": 97,
+            "cueList": [
+                {
+                    "id": 0,
+                    "name": "OFF"
+                },
+                {
+                    "id": 1,
+                    "name": "MDJ1"
+                },
+                {
+                    "id": 2,
+                    "name": "MDJ2"
+                },
+                {
+                    "id": 3,
+                    "name": "MDJ3"
+                },
+                {
+                    "id": 4,
+                    "name": "MDJ4"
+                }
+            ]
+        }
+    ],
+    "presets": [
+        {
+            "id": 0,
+            "title": "OFF",
+            "Gametraks": 0
+        },
+        {
+            "id": 1,
+            "title": "Partie 1",
+            "Gametraks": 1
+        },
+        {
+            "id": 2,
+            "title": "Partie 2",
+            "Gametraks": 2
+        },
+        {
+            "id": 3,
+            "title": "Partie 3",
+            "Gametraks": 3
+        },
+        {
+            "id": 4,
+            "title": "Partie 4",
+            "Gametraks": 4
+        }
+    ]
+}
+                
