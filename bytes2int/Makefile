@@ -15,7 +15,7 @@ datafiles = \
 cflags = -DVERSION='"$(lib.version)"'
 
 # This Makefile is based on pd-lib-builder
-PDLIBBUILDER_DIR=pd-lib-builder/
+PDLIBBUILDER_DIR=../pd-lib-builder/
 include $(firstword $(wildcard $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder Makefile.pdlibbuilder))
 
 
