@@ -433,6 +433,28 @@ function pdjson:in_1_build()
   self:outlet(1, "symbol", { table_to_json(self.builder) })
 end
 
+-- Persiste self.builder sur disque, symétrique de in_1_write (qui persiste
+-- json_data). Utilisé par les patchs qui construisent un objet via
+-- add/array/push/pop puis veulent le sauver sans repasser par set/write.
+function pdjson:in_1_writeBuilder(atoms)
+  if #atoms ~= 1 or type(atoms[1]) ~= "string" then
+    pd.post("Error: writeBuilder method expects a single filename argument.")
+    return
+  end
+
+  local filename = resolvePath(self, atoms[1])
+  local file, err = io.open(filename, "w")
+  if not file then
+    pd.post("Error: Could not open file for writing: " .. err)
+    return
+  end
+
+  file:write(table_to_json(self.builder))
+  file:close()
+
+  pd.post("Builder JSON saved to: " .. filename)
+end
+
 function pdjson:in_1_dumpBinary()
   if not json_data then
     pd.post("Error: No JSON data loaded")
