@@ -99,8 +99,12 @@ local function resolvePath(self, filename)
   if filename:sub(1, 1) == "/" then
     return filename
   else
-    -- Chemin relatif : ajouter le loadpath
-    return self._loadpath .. filename
+    -- Chemin relatif : par rapport au patch appelant (_canvaspath), pas au
+    -- script pdjson.pd_lua lui-même (_loadpath) -- vérifié en conditions
+    -- réelles (2026-07-18) : _loadpath pointe vers le dossier de cet
+    -- external, _canvaspath vers celui du patch qui l'instancie, cohérent
+    -- avec la résolution relative de midifile pour un même chemin.
+    return self._canvaspath .. filename
   end
 end
 
