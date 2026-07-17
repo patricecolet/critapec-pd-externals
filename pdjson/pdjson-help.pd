@@ -54,7 +54,7 @@
 #X msg 51 149 read trackConfig.json;
 #X text 20 760 add / array / push / pop / clear / build -- incremental builder (2026-07-17);
 #X obj 20 800 pdjson;
-#X msg 20 830 clear;
+#X msg 20 830 clearBuilder;
 #X msg 90 830 add name Intro;
 #X msg 220 830 add bpm 96;
 #X msg 350 830 push voicing;
@@ -63,7 +63,7 @@
 #X msg 660 830 pop;
 #X msg 730 830 build;
 #X obj 20 870 print pdjson-builder;
-#X text 20 900 clear then add then push then add add then pop then build to see a nested object as JSON text;
+#X text 20 900 clearBuilder then add then push then add add then pop then build to see a nested object as JSON text;
 #X connect 1 0 2 0;
 #X connect 2 0 28 0;
 #X connect 3 0 1 0;

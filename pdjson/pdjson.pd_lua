@@ -335,7 +335,11 @@ function pdjson:in_1_pop()
   table.remove(self.builderStack)
 end
 
-function pdjson:in_1_clear()
+-- Nommé clearBuilder (pas "clear") : vérifié en conditions réelles dans Pd
+-- (2026-07-17) -- un message "clear" nu n'atteint jamais in_1_clear, pdlua
+-- ou Pd core semble intercepter ce nom avant la résolution de méthode
+-- personnalisée. "clearBuilder" n'a pas ce conflit.
+function pdjson:in_1_clearBuilder()
   self.builder = {}
   self.builderStack = {}
 end
