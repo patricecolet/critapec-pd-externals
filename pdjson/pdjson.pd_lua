@@ -107,7 +107,9 @@ end
 function pdjson:initialize(name, atoms)
   self.inlets = 1
   self.outlets = 1
-  
+  self.builder = {}
+  self.builderStack = {}
+
   -- Si un argument est fourni, charger le fichier JSON
   if atoms[1] ~= nil then
     local fname = resolvePath(self, atoms[1])
@@ -280,6 +282,64 @@ function pdjson:in_1_set(atoms)
   convertirJsonEnBuffer(json_data, {}, jsonFileBuffer, {})
 end
 
+-- ===== Construction JSON incrémentale (add/array/push/pop/clear) =====
+-- Complète get/set (qui exigent un JSON déjà chargé dans json_data) par un
+-- constructeur à part : self.builder est une table Lua mutable, self.builderStack
+-- le curseur de sous-objet courant (push/pop). Voir PATCH_REBUILD.md §1 —
+-- portée volontairement réduite par rapport à PuRestJson (une seule table
+-- mutable avec curseur, pas d'instanciation de plusieurs objets pdjson).
+
+local function builderCursor(self)
+  return self.builderStack[#self.builderStack] or self.builder
+end
+
+function pdjson:in_1_add(atoms)
+  if #atoms ~= 2 then
+    pd.post("Error: add expects exactly a key and a value.")
+    return
+  end
+  builderCursor(self)[tostring(atoms[1])] = atoms[2]
+end
+
+function pdjson:in_1_array(atoms)
+  if #atoms ~= 2 then
+    pd.post("Error: array expects exactly a key and a value.")
+    return
+  end
+  local key = tostring(atoms[1])
+  local cursor = builderCursor(self)
+  if type(cursor[key]) ~= "table" then
+    cursor[key] = {}
+  end
+  table.insert(cursor[key], atoms[2])
+end
+
+function pdjson:in_1_push(atoms)
+  if #atoms ~= 1 then
+    pd.post("Error: push expects a single key argument.")
+    return
+  end
+  local key = tostring(atoms[1])
+  local cursor = builderCursor(self)
+  if type(cursor[key]) ~= "table" then
+    cursor[key] = {}
+  end
+  table.insert(self.builderStack, cursor[key])
+end
+
+function pdjson:in_1_pop()
+  if #self.builderStack == 0 then
+    pd.post("Error: pop with no matching push.")
+    return
+  end
+  table.remove(self.builderStack)
+end
+
+function pdjson:in_1_clear()
+  self.builder = {}
+  self.builderStack = {}
+end
+
 local function table_to_json(tbl, indent_level)
   local indent = string.rep("  ", indent_level or 0)
   local result = ""
@@ -364,6 +424,13 @@ function pdjson:in_1_write(atoms)
   file:close()
 
   pd.post("JSON data saved to: " .. filename)
+end
+
+-- Sérialise self.builder (pas json_data) en une seule chaîne, envoyée comme
+-- un unique atome symbole sur l'outlet — payload prêt pour sendBinaryMessage
+-- côté QML sans repasser par un fichier.
+function pdjson:in_1_build()
+  self:outlet(1, "symbol", { table_to_json(self.builder) })
 end
 
 function pdjson:in_1_dumpBinary()
