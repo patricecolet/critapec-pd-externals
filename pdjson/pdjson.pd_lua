@@ -365,7 +365,8 @@ function pdjson:in_1_set(atoms)
   if num_last_key then
       last_key = num_last_key + 1
   end
-  local value = tonumber(atoms[#atoms]) or atoms[#atoms]
+  local value = atoms[#atoms]
+  if value == "null" then value = nil else value = tonumber(value) or value end
   if type(current_table) ~= "table" then -- Final check before assignment
       pd.post("Error: Cannot assign to non-table at: " .. tostring(atoms[#atoms - 1]))
       return
@@ -423,7 +424,15 @@ function pdjson:in_1_setB(atoms)
   local last_key = atoms[#atoms - 1]
   local num_last = tonumber(last_key)
   if num_last then last_key = num_last + 1 end
-  current[last_key] = tonumber(atoms[#atoms]) or atoms[#atoms]
+  local value = atoms[#atoms]
+  if value == "null" then
+    -- pas de nil en JSON cote Pd : la convention est d'effacer la cle, ce que
+    -- dump/get traitent deja comme une absence (une cle nulle n'apparait pas
+    -- dans un dump). Ecrire la chaine "null" ferait passer un vide pour un nom.
+    current[last_key] = nil
+  else
+    current[last_key] = tonumber(value) or value
+  end
 end
 
 function pdjson:in_1_array(atoms)

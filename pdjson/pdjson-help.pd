@@ -72,7 +72,9 @@
 #X msg 590 1040 setB scenes 0 sirens 0 mode play;
 #X msg 860 1040 setB scenes 1 sceneName montee;
 #X msg 1090 1040 build;
+#X msg 1230 1040 setB scenes 1 clipRef null;
 #X obj 20 1080 print pdjson-setB;
+#X text 20 1180 la valeur null efface la cle au lieu d'ecrire la chaine "null" -- il n'y a pas de nil en Pd\, et dump/get traitent deja une cle absente comme une absence. set suit la meme convention.;
 #X text 20 1110 numeric path elements are 0-based array indices -- scenes 0 then scenes 1 therefore build a two-element ARRAY of objects. <key...> <value> is exactly the shape dump outputs\, so the dump of another pdjson can be piped straight back into setB with no translation -- that is what it is for. Unlike set\, setB writes into the builder (what build serialises)\, not into the loaded json_data\, and does no deepcopy: it is meant to be called once per dump line.;
 #X text 20 1230 pushArray -- append a NEW object to an array and descend into it (2026-07-17);
 #X obj 20 1290 pdjson;
@@ -148,3 +150,4 @@
 #X connect 81 0 74 0;
 #X connect 82 0 74 0;
 #X connect 74 0 83 0;
+#X connect 84 0 64 0;
