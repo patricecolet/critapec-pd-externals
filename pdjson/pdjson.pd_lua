@@ -2,8 +2,12 @@ local lunajson = require 'lunajson'
 
 local pdjson = pd.Class:new():register("pdjson")
 
-local json_data = nil
-local jsonFileBuffer = {}
+-- json_data/jsonFileBuffer vivent sur self (par instance) -- pas de local de
+-- module ici : plusieurs pdjson actifs dans le meme patch (ex. clip-io.pd +
+-- composition-io.pd) ne doivent pas partager le meme document charge.
+-- Verifie en conditions reelles (2026-07-19) : deux instances, deux read sur
+-- des fichiers differents, un dump sur la premiere renvoyait le contenu de la
+-- seconde avant ce correctif.
 
 -- Fonction de copie de table (remplace unpack pour compatibilité)
 local function copyTable(source)
@@ -36,17 +40,17 @@ local function convertirJsonEnBuffer(data, indices, buffer, done)
     end
     done[data] = true
 
-    local index = 0
-    for key, value in pairs(data) do
-      local nouveauxIndices = copyTable(indices)
-
-      if type(key) == "number" then
-        table.insert(nouveauxIndices, index)
-        index = index + 1
-      else
-        table.insert(nouveauxIndices, key)
+    -- pairs() ne garantit pas l'ordre sur un tableau (clés entières séquentielles) --
+    -- corrigé 2026-07-19 : itération numérique explicite pour préserver l'ordre du JSON.
+    local is_array = true
+    for k, _ in pairs(data) do
+      if type(k) ~= "number" or k < 1 or k ~= math.floor(k) or k > #data then
+        is_array = false
+        break
       end
+    end
 
+    local function handleEntry(key, value, nouveauxIndices)
       if type(value) == "table" then
         convertirJsonEnBuffer(value, nouveauxIndices, buffer, done)
       else
@@ -56,6 +60,20 @@ local function convertirJsonEnBuffer(data, indices, buffer, done)
         end
         table.insert(ligne, sanitizeValue(value))
         table.insert(buffer, ligne)
+      end
+    end
+
+    if is_array then
+      for i = 1, #data do
+        local nouveauxIndices = copyTable(indices)
+        table.insert(nouveauxIndices, i - 1)
+        handleEntry(i, data[i], nouveauxIndices)
+      end
+    else
+      for key, value in pairs(data) do
+        local nouveauxIndices = copyTable(indices)
+        table.insert(nouveauxIndices, key)
+        handleEntry(key, value, nouveauxIndices)
       end
     end
   else
@@ -110,16 +128,19 @@ end
 
 function pdjson:initialize(name, atoms)
   self.inlets = 1
-  self.outlets = 1
+  self.outlets = 2
   self.builder = {}
   self.builderStack = {}
+  self.wsBuffer = ""
+  self.json_data = nil
+  self.jsonFileBuffer = {}
 
   -- Si un argument est fourni, charger le fichier JSON
   if atoms[1] ~= nil then
     local fname = resolvePath(self, atoms[1])
     if fname ~= nil then
-      json_data = loadJson(fname)
-      convertirJsonEnBuffer(json_data, {}, jsonFileBuffer, {})
+      self.json_data = loadJson(fname)
+      convertirJsonEnBuffer(self.json_data, {}, self.jsonFileBuffer, {})
     end
   end
   
@@ -133,16 +154,84 @@ function pdjson:in_1_read(atoms)
   end
   local fname = resolvePath(self, atoms[1])
   if fname ~= nil then
-    json_data = loadJson(fname)
-    jsonFileBuffer = {}  -- Vider le buffer avant de le remplir
-    convertirJsonEnBuffer(json_data, {}, jsonFileBuffer, {})
+    self.json_data = loadJson(fname)
+    self.jsonFileBuffer = {}  -- Vider le buffer avant de le remplir
+    convertirJsonEnBuffer(self.json_data, {}, self.jsonFileBuffer, {})
     pd.post("JSON loaded from: " .. fname)
   end
 end
-  
+
+-- parse <chaine JSON> -- decode une chaine deja en memoire (ex: recue par
+-- websocket), sans passer par un fichier -- read() suppose toujours un
+-- chemin, ce que la reception websocket n'a pas (2026-07-19).
+-- outlet 2: 1 = parse reussi (json_data/jsonFileBuffer a jour, dump/get
+-- utilisables), 0 = echec (JSON invalide OU juste incomplet -- lunajson ne
+-- distingue pas les deux, un appelant qui reassemble un buffer reeessaiera
+-- avec plus de donnees plutot que d'interpreter 0 comme une erreur fatale).
+-- lunajson.decode leve une vraie erreur Lua sur echec (pas de nil-return),
+-- confirme via un decode volontairement tronque : pcall est necessaire, un
+-- simple "if not data" ne capture jamais l'echec (2026-07-19).
+function pdjson:in_1_parse(atoms)
+  if #atoms < 1 or type(atoms[1]) ~= "string" then
+    pd.post("Error: parse method expects a JSON string argument.")
+    self:outlet(2, "float", {0})
+    return
+  end
+  local ok, data = pcall(lunajson.decode, atoms[1])
+  if not ok or data == nil then
+    self:outlet(2, "float", {0})
+    return
+  end
+  self.json_data = data
+  self.jsonFileBuffer = {}
+  convertirJsonEnBuffer(self.json_data, {}, self.jsonFileBuffer, {})
+  self:outlet(2, "float", {1})
+end
+
+-- wsappend <atoms...> -- reassemble les fragments livres par
+-- [websocket-server] : verifie sur un vrai client websocket (2026-07-19) que
+-- son flux d'octets est reconstruit en appliquant la tokenisation Pd
+-- classique -- CHAQUE virgule termine un message, CHAQUE espace separe des
+-- atomes DANS un message -- donc un JSON multi-champs arrive toujours
+-- fragmente, jamais comme un seul atome. Chaque appel = un message recu ;
+-- ses atomes sont rejoints par un espace (l'espace d'origine est perdu mais
+-- l'ordre/le nombre d'atomes ne l'est pas), puis rattaches au buffer avec
+-- une virgule si ce n'est pas le premier fragment. Tente un decode a chaque
+-- appel ; meme signal 0/1 que parse. Sur succes, le buffer est vide pour le
+-- prochain message -- wsreset permet d'abandonner un fragment partiel (ex:
+-- deconnexion socket) sans attendre un decode qui n'arrivera jamais.
+function pdjson:in_1_wsappend(atoms)
+  local parts = {}
+  for i, a in ipairs(atoms) do
+    parts[i] = tostring(a)
+  end
+  local segment = table.concat(parts, " ")
+
+  if self.wsBuffer == nil or self.wsBuffer == "" then
+    self.wsBuffer = segment
+  else
+    self.wsBuffer = self.wsBuffer .. "," .. segment
+  end
+
+  local ok, data = pcall(lunajson.decode, self.wsBuffer)
+  if not ok or data == nil then
+    self:outlet(2, "float", {0})
+    return
+  end
+  self.json_data = data
+  self.jsonFileBuffer = {}
+  convertirJsonEnBuffer(self.json_data, {}, self.jsonFileBuffer, {})
+  self.wsBuffer = ""
+  self:outlet(2, "float", {1})
+end
+
+function pdjson:in_1_wsreset()
+  self.wsBuffer = ""
+end
+
 function pdjson:in_1_dump()
-  if jsonFileBuffer then
-    for _, line in ipairs(jsonFileBuffer) do
+  if self.jsonFileBuffer then
+    for _, line in ipairs(self.jsonFileBuffer) do
       self:outlet(1, "list", line)
     end
   end
@@ -203,7 +292,7 @@ end
 
 -- Fonction principale pour gérer les arguments
 function pdjson:in_1_get(atoms)
-  self:parcourirJson(json_data, atoms, 1, {})
+  self:parcourirJson(self.json_data, atoms, 1, {})
 end
 
 
@@ -245,7 +334,7 @@ local function deepcopy(orig)
 end
 
 function pdjson:in_1_set(atoms)
-  local new_json_data = json_data and deepcopy(json_data) or {}
+  local new_json_data = self.json_data and deepcopy(self.json_data) or {}
   local current_table = new_json_data
   if #atoms < 2 then
       pd.post("Error: Update requires at least a key and a value.")
@@ -282,8 +371,8 @@ function pdjson:in_1_set(atoms)
       return
   end
   current_table[last_key] = value
-  json_data = new_json_data
-  convertirJsonEnBuffer(json_data, {}, jsonFileBuffer, {})
+  self.json_data = new_json_data
+  convertirJsonEnBuffer(self.json_data, {}, self.jsonFileBuffer, {})
 end
 
 -- ===== Construction JSON incrémentale (add/array/push/pop/clear) =====
@@ -303,6 +392,38 @@ function pdjson:in_1_add(atoms)
     return
   end
   builderCursor(self)[tostring(atoms[1])] = atoms[2]
+end
+
+-- Comme set, mais sur le builder au lieu de json_data. Ecrit <valeur> au bout
+-- d'un <chemin...> (cles string, ou index numeriques 0-based comme partout
+-- ailleurs dans cet external), en creant les tables intermediaires au besoin.
+-- Raison d'etre : <cle...> <valeur> est EXACTEMENT la forme que dump sort, donc
+-- setB permet de reinjecter tel quel le dump d'un autre pdjson dans le builder,
+-- sans avoir a le retraduire en sequence push/add cote patch -- indispensable
+-- pour agreger N fichiers de scenes en un seul payload (pedalier: scenesList).
+-- Contrairement a set, PAS de deepcopy : appele une fois par ligne de dump, soit
+-- des centaines de fois par payload, copier tout l'arbre a chaque appel serait
+-- ruineux. Le chemin part du curseur courant (comme add/array), donc de la
+-- racine du builder tant qu'aucun push n'est actif.
+function pdjson:in_1_setB(atoms)
+  if #atoms < 2 then
+    pd.post("Error: setB requires at least a key and a value.")
+    return
+  end
+  local current = builderCursor(self)
+  for j = 1, #atoms - 2 do
+    local key = atoms[j]
+    local num_key = tonumber(key)
+    if num_key then key = num_key + 1 end
+    if type(current[key]) ~= "table" then
+      current[key] = {}
+    end
+    current = current[key]
+  end
+  local last_key = atoms[#atoms - 1]
+  local num_last = tonumber(last_key)
+  if num_last then last_key = num_last + 1 end
+  current[last_key] = tonumber(atoms[#atoms]) or atoms[#atoms]
 end
 
 function pdjson:in_1_array(atoms)
@@ -329,6 +450,26 @@ function pdjson:in_1_push(atoms)
     cursor[key] = {}
   end
   table.insert(self.builderStack, cursor[key])
+end
+
+-- Comme push, mais pour un tableau d'objets distincts (ex. loops.states[]) :
+-- ajoute un nouvel élément (table vide) au tableau à <key> et descend le
+-- curseur dedans -- pop symétrique existant referme l'élément, prêt pour le
+-- suivant. push seul ne couvre pas ce cas : il redescend dans LE MÊME objet
+-- à chaque appel, il ne crée pas un nouvel élément de tableau.
+function pdjson:in_1_pushArray(atoms)
+  if #atoms ~= 1 then
+    pd.post("Error: pushArray expects a single key argument.")
+    return
+  end
+  local key = tostring(atoms[1])
+  local cursor = builderCursor(self)
+  if type(cursor[key]) ~= "table" then
+    cursor[key] = {}
+  end
+  local element = {}
+  table.insert(cursor[key], element)
+  table.insert(self.builderStack, element)
 end
 
 function pdjson:in_1_pop()
@@ -427,7 +568,7 @@ function pdjson:in_1_write(atoms)
     return
   end
 
-  local json_string = table_to_json(json_data)
+  local json_string = table_to_json(self.json_data)
   file:write(json_string)
   file:close()
 
@@ -464,14 +605,14 @@ function pdjson:in_1_writeBuilder(atoms)
 end
 
 function pdjson:in_1_dumpBinary()
-  if not json_data then
+  if not self.json_data then
     pd.post("Error: No JSON data loaded")
     return
   end
-  
+
   local message = {
     type = "CONFIG_FULL",
-    config = json_data
+    config = self.json_data
   }
   
   local jsonString = lunajson.encode(message)
