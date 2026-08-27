@@ -147,18 +147,34 @@ function pdjson:initialize(name, atoms)
   return true
 end
 
+-- outlet 2: 1 = fichier lu et decode, 0 = echec -- meme signal que parse, pour
+-- qu'un appelant puisse se brancher dessus au lieu de deviner. Avant
+-- (2026-07-29), "JSON loaded from" etait poste meme quand loadJson avait
+-- rendu nil : la console annoncait un chargement juste apres avoir affiche
+-- "Impossible to open", et l'ancien json_data restait en place.
 function pdjson:in_1_read(atoms)
   if #atoms < 1 or type(atoms[1]) ~= "string" then
     pd.post("Error: read method expects a filename argument.")
+    self:outlet(2, "float", {0})
     return
   end
   local fname = resolvePath(self, atoms[1])
-  if fname ~= nil then
-    self.json_data = loadJson(fname)
-    self.jsonFileBuffer = {}  -- Vider le buffer avant de le remplir
-    convertirJsonEnBuffer(self.json_data, {}, self.jsonFileBuffer, {})
-    pd.post("JSON loaded from: " .. fname)
+  if fname == nil then
+    self:outlet(2, "float", {0})
+    return
   end
+  local data = loadJson(fname)
+  if data == nil then
+    self.json_data = nil
+    self.jsonFileBuffer = {}
+    self:outlet(2, "float", {0})
+    return
+  end
+  self.json_data = data
+  self.jsonFileBuffer = {}  -- Vider le buffer avant de le remplir
+  convertirJsonEnBuffer(self.json_data, {}, self.jsonFileBuffer, {})
+  pd.post("JSON loaded from: " .. fname)
+  self:outlet(2, "float", {1})
 end
 
 -- parse <chaine JSON> -- decode une chaine deja en memoire (ex: recue par
