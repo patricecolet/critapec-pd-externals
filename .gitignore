@@ -7,6 +7,9 @@
 
 # Fichiers temporaires
 *~
+# Le dossier de l'external c-siren~ finit par un tilde : sans cette exception,
+# le motif ci-dessus l'avale en entier et l'external ne part jamais.
+!c-siren~/
 .DS_Store
 
 # Build directories
