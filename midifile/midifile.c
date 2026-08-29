@@ -43,6 +43,8 @@ static t_class *midifile_class;
 
 #define PATH_BUF_SIZE 1024
 #define MAX_TRACKS 128
+/* Triples (key, timestamp, velocity) : 1024 noteOn en attente. */
+#define MF_PENDING_MAX 3072
 /* track data is allocated as needed but we need to preallocate space for the pointers */
 #define ALL_TRACKS MAX_TRACKS
 /** [midifile] can be in one of three states:
@@ -1546,9 +1548,17 @@ static void midifile_dump_notes(t_midifile *x, t_floatarg track)
     
     if(x->state != mfReading) return; /* only if reading */
     
-    /* Array to track pending noteOn events: [note<<8|channel] -> {timestamp, velocity} */
-    /* Declared OUTSIDE the loop to be shared across all tracks */
-    int pendingNotes[256];  /* 256 = 16 channels * 16 notes max per channel */
+    /* Pending noteOn events, as a stack of triples (key, timestamp, velocity).
+       NOT a table indexed by note: each noteOn pushes three ints, and only a
+       matching noteOff pops one. A stream of noteOns without noteOffs -- a
+       siren's motor line, velocity 1, never released -- therefore grows without
+       bound. The array used to hold 256 ints, i.e. 85 pending notes, with no
+       bounds check: the 86th noteOn wrote past the end of a stack array and
+       took Pd down with SIGSEGV. Seen on a 1183-noteOn clip, 2026-08-29.
+       Capacity is now explicit, and a full stack drops its oldest entry rather
+       than overflowing -- the recent notes are the ones a noteOff can still
+       match. */
+    int pendingNotes[MF_PENDING_MAX];
     int pendingCount = 0;
     
     /* Parse all tracks or a specific track */
@@ -1637,6 +1647,13 @@ static void midifile_dump_notes(t_midifile *x, t_floatarg track)
                 {
                     /* Store pending noteOn: [note<<8|channel] -> timestamp */
                     int key = (c << 8) | channel;
+                    if (pendingCount + 3 > MF_PENDING_MAX)
+                    {   /* plein : on jette le plus ancien triplet */
+                        int j;
+                        for (j = 0; j < pendingCount - 3; ++j)
+                            pendingNotes[j] = pendingNotes[j + 3];
+                        pendingCount -= 3;
+                    }
                     pendingNotes[pendingCount++] = key;
                     pendingNotes[pendingCount++] = total_time;  /* timestamp */
                     pendingNotes[pendingCount++] = d;            /* velocity */
